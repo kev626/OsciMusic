@@ -58,6 +58,18 @@ def run():
     duration = 2 # Audio duration (seconds)
     totalSamples = int(samples * duration)
 
+    wavFileLeft = wave.open("outLeft.wav", "wb")
+    wavFileLeft.setnchannels(1)
+    wavFileLeft.setsampwidth(2)
+    wavFileLeft.setframerate(samples)
+    wavFileLeft.setnframes(totalSamples)
+
+    wavFileRight = wave.open("outRight.wav", "wb")
+    wavFileRight.setnchannels(1)
+    wavFileRight.setsampwidth(2)
+    wavFileRight.setframerate(samples)
+    wavFileRight.setnframes(totalSamples)
+
     wavFile = wave.open("out.wav", "wb")
     wavFile.setnchannels(2)
     wavFile.setsampwidth(2)
@@ -72,6 +84,10 @@ def run():
     totalDistance = sum(distances)
 
     distancePerSample = totalDistance / samplesPerPeriod
+
+    segDistCache = []
+    for seg in range(1, len(route)):
+        segDistCache.append(dist(route[seg-1], route[seg], points))
     
     for sample in range(totalSamples):
         i = sample % samplesPerPeriod
@@ -80,12 +96,12 @@ def run():
 
         walkedDistance = 0
         for seg in range(1, len(route)):
-            walkedDistance += dist(route[seg-1], route[seg], points)
+            walkedDistance += segDistCache[seg-1]
             if walkedDistance >= distanceTravelledSoFar or currentSegment == len(route) - 1:
                 break
             currentSegment += 1
         
-        segmentLength = dist(route[currentSegment], route[currentSegment + 1], points)
+        segmentLength = segDistCache[currentSegment]
 
         distanceIntoCurrent = distanceTravelledSoFar - (walkedDistance - segmentLength)
         percentOfCurrentSegment = distanceIntoCurrent / segmentLength
@@ -93,8 +109,12 @@ def run():
         h = int(32767.0 * lerp(points[route[currentSegment]][0], points[route[currentSegment + 1]][0], percentOfCurrentSegment))
         v = int(32767.0 * lerp(points[route[currentSegment]][1], points[route[currentSegment + 1]][1], percentOfCurrentSegment))
 
+        wavFileLeft.writeframesraw(struct.pack('<h', h))
+        wavFileRight.writeframesraw(struct.pack('<h', v))
         wavFile.writeframesraw(struct.pack('<hh', h, v))
     
+    wavFileLeft.close()
+    wavFileRight.close()
     wavFile.close()
 
 
