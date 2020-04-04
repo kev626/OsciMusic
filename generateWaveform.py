@@ -5,7 +5,7 @@ import struct
 import numpy
 
 def run():
-    pointsFile = open("C:\\Users\\Kevin\\Documents\\osciMusic\\points.txt")
+    pointsFile = open("points.txt")
 
     edges = []
     points = []
